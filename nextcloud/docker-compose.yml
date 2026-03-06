@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:11
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret_change_me
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: nc_secret_change_me
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    networks:
+      - backend
+
+  app:
+    image: nextcloud:29-apache
+    container_name: nextcloud-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: nc_secret_change_me
+      MYSQL_HOST: db
+      REDIS_HOST: redis
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend
+
+volumes:
+  db_data:
+  nextcloud_data:
+
+networks:
+  backend:
+    driver: bridge

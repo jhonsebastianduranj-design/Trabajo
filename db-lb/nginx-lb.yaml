@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-lb-config
+data:
+  default.conf: |
+    upstream aca_backend {
+      server aca-app-svc.default.svc.cluster.local:80;
+    }
+
+    server {
+      listen 80;
+      location / {
+        proxy_pass http://aca_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-lb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-lb
+  template:
+    metadata:
+      labels:
+        app: nginx-lb
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: config
+          configMap:
+            name: nginx-lb-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-lb
+spec:
+  selector:
+    app: nginx-lb
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80

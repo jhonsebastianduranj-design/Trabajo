@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOnlyMonitoring",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:Get*",
+        "cloudwatch:List*",
+        "logs:Describe*",
+        "logs:Get*",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyDeleteCriticalBackups",
+      "Effect": "Deny",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:DeleteBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aca-backups",
+        "arn:aws:s3:::aca-backups/*"
+      ]
+    }
+  ]
+}
